@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "97513540763",
+    "firebase_url": "https://realtimesocialmedia-8c0cd.firebaseio.com",
+    "project_id": "realtimesocialmedia-8c0cd",
+    "storage_bucket": "realtimesocialmedia-8c0cd.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:97513540763:android:d822c72148dd5f01",
+        "android_client_info": {
+          "package_name": "com.morpheus.realtimelocationwithsocialmedia"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "97513540763-9i1uhnscog9e33gilc30bqd6hovpmdv4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.morpheus.realtimelocationwithsocialmedia",
+            "certificate_hash": "f8f8cf1fa4b3a5a47b60065580964fa533a38a12"
+          }
+        },
+        {
+          "client_id": "97513540763-mjd6an5lnmqkfqojjrussfrh14m9rkqp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCfAMx8w6P9KHYVg8qR50RFeWjNp6oGqNA"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "97513540763-mjd6an5lnmqkfqojjrussfrh14m9rkqp.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
