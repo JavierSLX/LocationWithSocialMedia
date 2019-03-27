@@ -77,6 +77,14 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"/>
 
+            <com.facebook.login.widget.LoginButton
+                android:id="@+id/btFacebook"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"/>
+
         </LinearLayout>
     </ScrollView>
 

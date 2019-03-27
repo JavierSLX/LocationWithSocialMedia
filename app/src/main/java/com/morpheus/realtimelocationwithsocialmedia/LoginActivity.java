@@ -5,12 +5,24 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.facebook.AccessToken;
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
+import com.facebook.Profile;
+import com.facebook.ProfileTracker;
+import com.facebook.login.LoginManager;
+import com.facebook.login.LoginResult;
+import com.facebook.login.widget.LoginButton;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -19,13 +31,18 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.GoogleApiClient;
 
-public class LoginActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener
+import org.json.JSONException;
+import org.json.JSONObject;
+
+public class LoginActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener, FacebookCallback<LoginResult>
 {
     private EditText edtUser, edtPass;
     private CheckBox chDatos;
     private Button btEntrar;
     private static final int REQUEST_CODE = 1;
     private GoogleApiClient apiClient;
+    private CallbackManager callbackManager;
+    private ProfileTracker profileTracker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -33,6 +50,32 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        //______________________________ GOOGLE
+        loginWithGoogle();
+
+        //_________________________________ FACEBOOK
+        loginWithFacebook();
+    }
+
+    @Override
+    protected void onResume()
+    {
+        super.onResume();
+
+        profileTracker.startTracking();
+    }
+
+    @Override
+    protected void onStop()
+    {
+        super.onStop();
+
+        profileTracker.stopTracking();
+    }
+
+    //Método que permite el logeo por cuenta de Google
+    private void loginWithGoogle()
+    {
         SignInButton btGoogle = findViewById(R.id.btGoogle);
 
         //Configuracion visual del boton
@@ -60,6 +103,53 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
         });
     }
 
+    //Método que permite el logeo por cuenta de Facebook
+    private void loginWithFacebook()
+    {
+        LoginButton btFacebook = findViewById(R.id.btFacebook);
+
+        //Si hay un logeo con Facebook anterior, lo cierra
+        if(AccessToken.getCurrentAccessToken() != null)
+            LoginManager.getInstance().logOut();
+
+        //Crea el manejador de peticiones y la configuracion del botón
+        callbackManager = CallbackManager.Factory.create();
+        btFacebook.setReadPermissions("public_profile", "email");
+        btFacebook.registerCallback(callbackManager, this);
+
+        //Arma el perfil si se logeo correctamente el usuario
+        profileTracker = new ProfileTracker()
+        {
+            @Override
+            protected void onCurrentProfileChanged(Profile oldProfile, Profile currentProfile)
+            {
+                GraphRequest request = GraphRequest.newMeRequest(AccessToken.getCurrentAccessToken(), new GraphRequest.GraphJSONObjectCallback()
+                {
+                    @Override
+                    public void onCompleted(JSONObject object, GraphResponse response)
+                    {
+                        try
+                        {
+                            String cuenta = object.getString("email") != null ? object.getString("email") : object.getString("name");
+
+                            loginCorrect(cuenta);
+                        } catch (JSONException e)
+                        {
+                            e.printStackTrace();
+                            Toast.makeText(LoginActivity.this, "Error al obtener info de Facebook", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+
+                Bundle params = new Bundle();
+                params.putString("fields", "id,name,link,email");
+
+                request.setParameters(params);
+                request.executeAsync();
+            }
+        };
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data)
     {
@@ -73,9 +163,25 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
             if(result.isSuccess())
             {
                 GoogleSignInAccount account = result.getSignInAccount();
-                Toast.makeText(this, account.getEmail() != null ? account.getEmail() : "Sin correo", Toast.LENGTH_SHORT).show();
+                String cuenta = account.getEmail() != null ? account.getEmail() : "Sin correo";
+
+                loginCorrect(cuenta);
             }
         }
+
+        callbackManager.onActivityResult(requestCode, resultCode, data);
+    }
+
+    //Metodo que cambia de actividad cuando se logea correctamente
+    private void loginCorrect(String cuenta)
+    {
+        Intent intent = new Intent(this, MainActivity.class);
+        Bundle bundle = new Bundle();
+        bundle.putString("cuenta", cuenta);
+        intent.putExtras(bundle);
+
+        startActivity(intent);
+        finish();
     }
 
     //Cuando fracasa la conexión con Google
@@ -83,5 +189,26 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult)
     {
         Toast.makeText(this, "Error al conectar con Google", Toast.LENGTH_SHORT).show();
+    }
+
+    //Inicio de sesion correcto con Facebook
+    @Override
+    public void onSuccess(LoginResult loginResult)
+    {
+        Log.i(LoginActivity.class.getSimpleName(), "Inicio de sesión correcto");
+    }
+
+    //Inicio cancelado con Facebook
+    @Override
+    public void onCancel()
+    {
+        Toast.makeText(this, "Se ha cancelado el inicio de sesión en Facebook", Toast.LENGTH_SHORT).show();
+    }
+
+    //Error de inicio de sesion con Facebook
+    @Override
+    public void onError(FacebookException error)
+    {
+        Toast.makeText(this, "Error al iniciar sesión con Facebook", Toast.LENGTH_SHORT).show();
     }
 }
