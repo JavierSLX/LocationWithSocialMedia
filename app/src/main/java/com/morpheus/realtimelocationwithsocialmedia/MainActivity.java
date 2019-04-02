@@ -4,6 +4,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.TextView;
 
+import com.morpheus.realtimelocationwithsocialmedia.Model.Usuario;
+
 public class MainActivity extends AppCompatActivity
 {
 
@@ -13,7 +15,7 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        String cuenta = getIntent().getStringExtra("cuenta");
-        ((TextView)findViewById(R.id.txtCuenta)).setText(cuenta);
+        Usuario usuario = getIntent().getParcelableExtra("USUARIO");
+        ((TextView)findViewById(R.id.txtCuenta)).setText(usuario.getNombre());
     }
 }

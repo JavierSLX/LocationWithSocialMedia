@@ -30,6 +30,9 @@ import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.morpheus.realtimelocationwithsocialmedia.Controller.LoginDAO;
+import com.morpheus.realtimelocationwithsocialmedia.Model.RequestVolley;
+import com.morpheus.realtimelocationwithsocialmedia.Model.Usuario;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -132,7 +135,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                         {
                             String cuenta = object.getString("email") != null ? object.getString("email") : object.getString("name");
 
-                            loginCorrect(cuenta);
+                            loginCorrect(cuenta, "Facebook");
                         } catch (JSONException e)
                         {
                             e.printStackTrace();
@@ -165,7 +168,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                 GoogleSignInAccount account = result.getSignInAccount();
                 String cuenta = account.getEmail() != null ? account.getEmail() : "Sin correo";
 
-                loginCorrect(cuenta);
+                loginCorrect(cuenta, "Google");
             }
         }
 
@@ -173,15 +176,38 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
     }
 
     //Metodo que cambia de actividad cuando se logea correctamente
-    private void loginCorrect(String cuenta)
+    private void loginCorrect(String cuenta, String metodo)
     {
-        Intent intent = new Intent(this, MainActivity.class);
-        Bundle bundle = new Bundle();
-        bundle.putString("cuenta", cuenta);
-        intent.putExtras(bundle);
+        compareWithBD(cuenta, metodo);
+    }
 
-        startActivity(intent);
-        finish();
+    //Metodo que checa si existe la cuenta en la BD cuando viene por social media
+    private void compareWithBD(final String cuenta, String metodo)
+    {
+        LoginDAO dao = LoginDAO.getInstance(this);
+        dao.accessSocialMedia(cuenta, metodo, new RequestVolley.OnResultElementListener<Usuario>()
+        {
+            @Override
+            public void onSuccess(Usuario result)
+            {
+                if(result != null)
+                {
+                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                    Bundle bundle = new Bundle();
+                    bundle.putParcelable("USUARIO", result);
+                    intent.putExtras(bundle);
+
+                    startActivity(intent);
+                    finish();
+                }
+            }
+
+            @Override
+            public void onFailed(String error, int responseCode)
+            {
+                Toast.makeText(LoginActivity.this, error + " " + responseCode, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     //Cuando fracasa la conexión con Google
