@@ -1,5 +1,6 @@
 package com.morpheus.realtimelocationwithsocialmedia;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -7,7 +8,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -40,12 +40,13 @@ import org.json.JSONObject;
 public class LoginActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener, FacebookCallback<LoginResult>
 {
     private EditText edtUser, edtPass;
-    private CheckBox chDatos;
-    private Button btEntrar;
+    private CheckBox chkDatos;
     private static final int REQUEST_CODE = 1;
     private GoogleApiClient apiClient;
     private CallbackManager callbackManager;
     private ProfileTracker profileTracker;
+    private ProgressDialog progressDialog;
+    private LoginDAO dao;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -53,11 +54,25 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        edtUser = findViewById(R.id.edtUser);
+        edtPass = findViewById(R.id.edtPass);
+        chkDatos = findViewById(R.id.chkDatos);
+
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setTitle("Cargando");
+        progressDialog.setMessage("Un momento por favor...");
+        progressDialog.setCanceledOnTouchOutside(false);
+
+        dao = LoginDAO.getInstance(this);
+
         //______________________________ GOOGLE
         loginWithGoogle();
 
         //_________________________________ FACEBOOK
         loginWithFacebook();
+
+        //Eventos
+        findViewById(R.id.btEntrar).setOnClickListener(clickButtonEntrar);
     }
 
     @Override
@@ -75,6 +90,22 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
 
         profileTracker.stopTracking();
     }
+
+    //Objeto de evento del botón
+    View.OnClickListener clickButtonEntrar = new View.OnClickListener()
+    {
+        @Override
+        public void onClick(View view)
+        {
+            String nick = edtUser.getText().toString().trim();
+            String pass = edtPass.getText().toString().trim();
+
+            if(nick.length() > 0 && pass.length() > 0)
+                loginManual(nick, pass);
+            else
+                Toast.makeText(LoginActivity.this, "Llene todos los campos por favor", Toast.LENGTH_SHORT).show();
+        }
+    };
 
     //Método que permite el logeo por cuenta de Google
     private void loginWithGoogle()
@@ -135,7 +166,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                         {
                             String cuenta = object.getString("email") != null ? object.getString("email") : object.getString("name");
 
-                            loginCorrect(cuenta, "Facebook");
+                            loginCorrectSocial(cuenta, "Facebook");
                         } catch (JSONException e)
                         {
                             e.printStackTrace();
@@ -153,6 +184,39 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
         };
     }
 
+    //Metodo que permite el logeo manual
+    private void loginManual(String nick, String pass)
+    {
+        progressDialog.show();
+        dao.accessManual(nick, pass, new RequestVolley.OnResultElementListener<Usuario>()
+        {
+            @Override
+            public void onSuccess(Usuario result)
+            {
+                progressDialog.dismiss();
+                if(result != null)
+                {
+                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                    Bundle bundle = new Bundle();
+                    bundle.putParcelable("USUARIO", result);
+                    intent.putExtras(bundle);
+
+                    startActivity(intent);
+                    finish();
+                }
+                else
+                    Toast.makeText(LoginActivity.this, "Usuario/Contraseña incorrecta", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onFailed(String error, int responseCode)
+            {
+                progressDialog.dismiss();
+                Toast.makeText(LoginActivity.this, error + " " + responseCode, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data)
     {
@@ -168,7 +232,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                 GoogleSignInAccount account = result.getSignInAccount();
                 String cuenta = account.getEmail() != null ? account.getEmail() : "Sin correo";
 
-                loginCorrect(cuenta, "Google");
+                loginCorrectSocial(cuenta, "Google");
             }
         }
 
@@ -176,7 +240,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
     }
 
     //Metodo que cambia de actividad cuando se logea correctamente
-    private void loginCorrect(String cuenta, String metodo)
+    private void loginCorrectSocial(String cuenta, String metodo)
     {
         compareWithBD(cuenta, metodo);
     }
@@ -184,12 +248,13 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
     //Metodo que checa si existe la cuenta en la BD cuando viene por social media
     private void compareWithBD(final String cuenta, String metodo)
     {
-        LoginDAO dao = LoginDAO.getInstance(this);
+        progressDialog.show();
         dao.accessSocialMedia(cuenta, metodo, new RequestVolley.OnResultElementListener<Usuario>()
         {
             @Override
             public void onSuccess(Usuario result)
             {
+                progressDialog.dismiss();
                 if(result != null)
                 {
                     Intent intent = new Intent(LoginActivity.this, MainActivity.class);
@@ -200,11 +265,16 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                     startActivity(intent);
                     finish();
                 }
+                else
+                {
+                    Toast.makeText(LoginActivity.this, "Usuario no registrado", Toast.LENGTH_SHORT).show();
+                }
             }
 
             @Override
             public void onFailed(String error, int responseCode)
             {
+                progressDialog.dismiss();
                 Toast.makeText(LoginActivity.this, error + " " + responseCode, Toast.LENGTH_SHORT).show();
             }
         });
