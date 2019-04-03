@@ -88,6 +88,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
         //Activa el escaner de huella digital
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
         {
+            //TODO
             Intent intent = new Intent(this, MainActivity.class);
             signal = Fingerprint.getInstance(this, intent).reconocimientoDactilar();
         }
@@ -253,6 +254,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                     //Guarda el usuario (necesario por un login dactilar futuro)
                     preferences.setValueUsuario(result);
 
+                    //TODO
                     Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                     Bundle bundle = new Bundle();
                     bundle.putParcelable("USUARIO", result);
@@ -315,6 +317,8 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                 progressDialog.dismiss();
                 if(result != null)
                 {
+
+                    //TODO
                     Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                     Bundle bundle = new Bundle();
                     bundle.putParcelable("USUARIO", result);
