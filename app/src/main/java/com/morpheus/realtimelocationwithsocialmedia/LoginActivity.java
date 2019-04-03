@@ -2,6 +2,8 @@ package com.morpheus.realtimelocationwithsocialmedia;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.os.Build;
+import android.os.CancellationSignal;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -31,7 +33,9 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.morpheus.realtimelocationwithsocialmedia.Controller.LoginDAO;
-import com.morpheus.realtimelocationwithsocialmedia.Model.RequestVolley;
+import com.morpheus.realtimelocationwithsocialmedia.Model.Dactilar.Fingerprint;
+import com.morpheus.realtimelocationwithsocialmedia.Model.Utils.Preferences;
+import com.morpheus.realtimelocationwithsocialmedia.Model.Utils.RequestVolley;
 import com.morpheus.realtimelocationwithsocialmedia.Model.Usuario;
 
 import org.json.JSONException;
@@ -47,6 +51,8 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
     private ProfileTracker profileTracker;
     private ProgressDialog progressDialog;
     private LoginDAO dao;
+    private Preferences preferences;
+    private CancellationSignal signal;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -64,6 +70,21 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
         progressDialog.setCanceledOnTouchOutside(false);
 
         dao = LoginDAO.getInstance(this);
+        preferences = Preferences.getInstance(this);
+
+        //Checa si hay datos guardados por default
+        if(preferences.getUser() != null && preferences.getPass() != null)
+        {
+            edtUser.setText(preferences.getUser());
+            edtPass.setText(preferences.getPass());
+        }
+
+        //Activa el escaner de huella digital
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+        {
+            Intent intent = new Intent(this, MainActivity.class);
+            signal = Fingerprint.getInstance(this, intent).reconocimientoDactilar();
+        }
 
         //______________________________ GOOGLE
         loginWithGoogle();
@@ -185,7 +206,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
     }
 
     //Metodo que permite el logeo manual
-    private void loginManual(String nick, String pass)
+    private void loginManual(final String nick, final String pass)
     {
         progressDialog.show();
         dao.accessManual(nick, pass, new RequestVolley.OnResultElementListener<Usuario>()
@@ -196,12 +217,20 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                 progressDialog.dismiss();
                 if(result != null)
                 {
+                    //Guarda las credenciales
+                    if(chkDatos.isChecked())
+                        preferences.setValuesUserCredencials(nick, pass);
+
+                    //Guarda el usuario (necesario por un login dactilar futuro)
+                    preferences.setValueUsuario(result);
+
                     Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                     Bundle bundle = new Bundle();
                     bundle.putParcelable("USUARIO", result);
                     intent.putExtras(bundle);
 
                     startActivity(intent);
+                    signal.cancel();
                     finish();
                 }
                 else
@@ -263,6 +292,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                     intent.putExtras(bundle);
 
                     startActivity(intent);
+                    signal.cancel();
                     finish();
                 }
                 else

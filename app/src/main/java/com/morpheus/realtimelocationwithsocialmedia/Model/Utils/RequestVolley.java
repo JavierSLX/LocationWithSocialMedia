@@ -1,4 +1,4 @@
-package com.morpheus.realtimelocationwithsocialmedia.Model;
+package com.morpheus.realtimelocationwithsocialmedia.Model.Utils;
 
 import android.content.Context;
 

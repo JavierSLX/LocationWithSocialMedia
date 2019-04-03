@@ -3,7 +3,7 @@ package com.morpheus.realtimelocationwithsocialmedia.Controller;
 import android.content.Context;
 
 import com.android.volley.Request;
-import com.morpheus.realtimelocationwithsocialmedia.Model.RequestVolley;
+import com.morpheus.realtimelocationwithsocialmedia.Model.Utils.RequestVolley;
 import com.morpheus.realtimelocationwithsocialmedia.Model.Usuario;
 import com.morpheus.realtimelocationwithsocialmedia.Model.Utils.Constants;
 
