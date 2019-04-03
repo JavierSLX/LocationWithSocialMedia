@@ -61,7 +61,7 @@ public class Handler extends FingerprintManager.AuthenticationCallback
     public void onAuthenticationHelp(int helpCode, CharSequence helpString)
     {
         super.onAuthenticationHelp(helpCode, helpString);
-        Toast.makeText(context, "Ayuda al autenticar la huella", Toast.LENGTH_SHORT).show();
+        Toast.makeText(context, "Coloque de nuevo su huella", Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -75,7 +75,7 @@ public class Handler extends FingerprintManager.AuthenticationCallback
     public void onAuthenticationError(int errorCode, CharSequence errString)
     {
         super.onAuthenticationError(errorCode, errString);
-        Toast.makeText(context, "Error al autenticar la huella", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(context, "Error al autenticar la huella", Toast.LENGTH_SHORT).show();
     }
 
     public CancellationSignal getSignal()

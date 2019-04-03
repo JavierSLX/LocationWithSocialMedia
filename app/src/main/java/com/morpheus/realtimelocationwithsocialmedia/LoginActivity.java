@@ -1,11 +1,15 @@
 package com.morpheus.realtimelocationwithsocialmedia;
 
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Build;
 import android.os.CancellationSignal;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -34,9 +38,11 @@ import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.morpheus.realtimelocationwithsocialmedia.Controller.LoginDAO;
 import com.morpheus.realtimelocationwithsocialmedia.Model.Dactilar.Fingerprint;
+import com.morpheus.realtimelocationwithsocialmedia.Model.Internet.ChequeoRed;
 import com.morpheus.realtimelocationwithsocialmedia.Model.Utils.Preferences;
 import com.morpheus.realtimelocationwithsocialmedia.Model.Utils.RequestVolley;
 import com.morpheus.realtimelocationwithsocialmedia.Model.Usuario;
+import com.morpheus.realtimelocationwithsocialmedia.Transmitter.BroadcastNetwork;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -94,6 +100,29 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
 
         //Eventos
         findViewById(R.id.btEntrar).setOnClickListener(clickButtonEntrar);
+
+        //Chequeo de internet (NO FUNCIONA)
+        //ChequeoRed.getInstance(this).chequeoInternet();
+        chequeoInternet();
+    }
+
+    public void chequeoInternet()
+    {
+        //Manda llamar el broadcast con una intencion y carga los elementos que le regresa
+        IntentFilter intentFilter = new IntentFilter(BroadcastNetwork.NETWORK_AVAILABLE_ACTION);
+        LocalBroadcastManager.getInstance(this).registerReceiver(new BroadcastReceiver()
+        {
+            @Override
+            public void onReceive(Context context, Intent intent)
+            {
+                boolean isNetworkAvailable = intent.getBooleanExtra(BroadcastNetwork.IS_NETWORK_AVAILABLE, false);
+                String networkStatus = isNetworkAvailable ? "Conectado" : "Desconectado";
+
+                //Da aviso que no hay internet
+                //Snackbar.make(view, "Estado conexión: " + networkStatus, Snackbar.LENGTH_LONG).show();
+                Toast.makeText(context, "Estado conexión: " + networkStatus, Toast.LENGTH_SHORT).show();
+            }
+        }, intentFilter);
     }
 
     @Override
